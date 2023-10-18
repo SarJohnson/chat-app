@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, TextInput, ImageBackground } from 'react-native';
 
+const background_image = require('../assets/Background_Image.png');
+
 const Start = ({ navigation }) => {
     const [name, setName] = useState('');
     const [background, setBackground] = useState('white');
     const colors = ['#090C08', '#474056', '#8A95A5', '#B9C6AE'];
 
     return (
-        <ImageBackground source={require("../assets/Background_Image.png")} style={styles.container}>
-            <Text style={styles.title}>App Title</Text>
+        <ImageBackground source={background_image} resizeMode="cover" style={styles.container}>
+            <Text style={styles.title}>Chat App</Text>
             <View style={styles.content}>
             <TextInput
                 style={styles.textInput}
