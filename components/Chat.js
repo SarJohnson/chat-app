@@ -1,39 +1,45 @@
 import { Bubble, GiftedChat } from 'react-native-gifted-chat';
 import { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, Platform, KeyboardAvoidingView } from 'react-native';
+import { collection, getDocs, addDoc, onSnapshot, orderBy, query } from 'firebase/firestore';
 
-const Chat = ({ route, navigation }) => {
-    const { name, color } = route.params;
+const Chat = ({ route, navigation, db }) => {
+    const { name, color, _id } = route.params;
     const [messages, setMessages] = useState([]);
+    let unsubMessages;
 
     useEffect(() => {
         navigation.setOptions({ title: name });
-        setMessages([
-            {
-                _id: 1,
-                text: "Hello developer",
-                createdAt: new Date(),
-                user: {
-                    _id: 2,
-                    name: "React Native",
-                    avatar: "https://placeimg.com/140/140/any",
-                },
-            },
-            {
-                _id: 2,
-                text: "This is a system message",
-                createdAt: new Date(),
-                system: true,
-            },
-        ]);
     }, []);
 
+    useEffect(() => {
+        const q = query(collection(db, "messages"), orderBy("createdAt", "desc"));
+        unsubMessages = onSnapshot(q, (docs) => {
+            let newMessages = [];
+            docs.forEach((doc) => {
+                newMessages.push({
+                    _id: doc.id,
+                    ...doc.data(),
+                    createdAt: new Date(doc.data().createdAt.toMillis()),
+                });
+            });
+            setMessages(newMessages);
+        });
+          return () => {
+            if (unsubMessages) {
+                unsubMessages();
+            }
+        };
+    }, []);
+      
+
     const onSend = (newMessages) => {
-        setMessages(previousMessages => GiftedChat.append(previousMessages, newMessages))
+        addDoc(collection(db, "messages"), newMessages[0]);
     };
 
     const renderBubble = (props) => {
-        return <Bubble
+        return (
+        <Bubble
             {...props}
             wrapperStyle={{
                 right: {
@@ -44,6 +50,7 @@ const Chat = ({ route, navigation }) => {
                 }
             }}
         />
+        );
     };
 
     return (
@@ -53,7 +60,8 @@ const Chat = ({ route, navigation }) => {
             renderBubble={renderBubble}
             onSend={messages => onSend(messages)}
             user={{
-                _id:  1
+                _id:  _id,
+                name: name,
             }}
             />
             { Platform.OS === 'android' ? <KeyboardAvoidingView behavior="height" /> : null }
